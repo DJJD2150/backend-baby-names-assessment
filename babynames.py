@@ -7,6 +7,10 @@
 # Licensed under the Apache License, Version 2.0
 # http://www.apache.org/licenses/LICENSE-2.0
 
+# GitHub user:  DJJD2150
+# Helped out by Jordan Davidson, Janelle Kuhns, Doug Enas, Daniel Lomelino, Kano Marvel,
+# Janell Huyck, Devon Middleton, Tiffany McLean
+
 """
 Define the extract_names() function below and change main()
 to call it.
@@ -44,7 +48,31 @@ def extract_names(filename):
     ['2006', 'Aaliyah 91', 'Aaron 57', 'Abagail 895', ...]
     """
     names = []
-    # +++your code here+++
+    with open(filename, "r") as f:
+        # creates a variable with a list of everything in the file, 
+        # separated into lines
+        file_lines = f.readlines()
+    # adds the year to the front of the list
+    # year_line = file_lines[40]
+    # print(year_line)
+    year = re.compile(r'Popularity\sin\s(\d\d\d\d)')
+    name = re.compile(r'<td>(\d+)</td><td>(\w+)</td><td>(\w+)</td>')
+    name_dict = {}
+    for file_line in reversed(file_lines):
+        if 'Popularity in ' in file_line:
+            extracted_year = year.search(file_line)
+            # print(dir(extracted_year))
+            # names.insert(0, extracted_year.group(1))
+        else:
+            extracted_name = name.findall(file_line)
+            if extracted_name:
+                name_dict[extracted_name[0][1]] = extracted_name[0][0]
+                name_dict[extracted_name[0][2]] = extracted_name[0][0]
+                names.append(extracted_name)
+    names = [x + " " + name_dict[x] for x in name_dict]
+    names = sorted(names)
+    names.insert(0, extracted_year.group(0)[14:18])
+    # print(names)
     return names
 
 
@@ -60,6 +88,10 @@ def create_parser():
     parser.add_argument('files', help='filename(s) to parse', nargs='+')
     return parser
 
+def create_summary_file(filename):
+    with open(filename + ".summary", "w") as summary_file:
+        text = '\n'.join(extract_names(filename)) + '\n'
+        summary_file.write(text)
 
 def main(args):
     # Create a command line parser object with parsing rules
@@ -68,22 +100,26 @@ def main(args):
     # NAMESPACE called 'ns'
     ns = parser.parse_args(args)
 
-    if not ns:
-        parser.print_usage()
-        sys.exit(1)
-
     file_list = ns.files
 
     # option flag
     create_summary = ns.summaryfile
 
+    if not ns:
+        parser.print_usage()
+        sys.exit(1)
+    elif create_summary:
+        for each_file in file_list:
+            create_summary_file(each_file)
+    else:
+        for each_file in file_list:
+            print_names = '\n'.join(extract_names(each_file))
+            print(print_names)
+
     # For each filename, call `extract_names()` with that single file.
     # Format the resulting list as a vertical list (separated by newline \n).
     # Use the create_summary flag to decide whether to print the list
     # or to write the list to a summary file (e.g. `baby1990.html.summary`).
-
-    # +++your code here+++
-
 
 if __name__ == '__main__':
     main(sys.argv[1:])
